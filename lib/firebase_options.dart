@@ -63,13 +63,14 @@ class DefaultFirebaseOptions {
     projectId: 'notes-1912a',
     storageBucket: 'notes-1912a.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC9YEgkYaD7tjbYf0vbVZqiKJLxa9pzmVQ',
     appId: '1:347336235922:ios:192d7d716e3d5da65f3f4b',
     messagingSenderId: '347336235922',
     projectId: 'notes-1912a',
     storageBucket: 'notes-1912a.firebasestorage.app',
+    androidClientId: '347336235922-07ndicc8rm963vb8cbe0f0kqf75vjh3c.apps.googleusercontent.com',
+    iosClientId: '347336235922-8qu35bj2e2uacjh8iggaibj5un62of7c.apps.googleusercontent.com',
     iosBundleId: 'com.example.firebaseCrud',
   );
 }

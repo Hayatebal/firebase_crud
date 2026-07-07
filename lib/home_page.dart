@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import 'auth_service.dart';
 import 'crud_service.dart';
+import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,6 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final AuthService _authService = AuthService();
   final CrudService _crudService = CrudService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
@@ -83,7 +86,7 @@ class _HomePageState extends State<HomePage> {
 
                 if (isEditing) {
                   await _crudService.updateItem(
-                    document!.id,
+                    document.id,
                     name: name,
                     quantity: quantity,
                   );
@@ -165,6 +168,43 @@ class _HomePageState extends State<HomePage> {
             },
             tooltip: _showFavoritesOnly ? 'Show all items' : 'Show favorites only',
           ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Sign Out'),
+                    content: const Text('Are you sure you want to sign out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Sign Out'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirmed == true) {
+                await _authService.signOut();
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                }
+              }
+            },
+            tooltip: 'Sign Out',
+          ),
         ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -195,7 +235,7 @@ class _HomePageState extends State<HomePage> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: filteredDocs.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (_, _) => const Divider(),
             itemBuilder: (context, index) {
               return _buildItemTile(filteredDocs[index]);
             },
