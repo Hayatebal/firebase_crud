@@ -108,7 +108,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Verify Email'),
+          title: const Text('BALILA-ON'),
           elevation: 0,
           automaticallyImplyLeading: false,
         ),

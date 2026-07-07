@@ -155,7 +155,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FirebaseCRUD (Balila-on)'),
+        title: const Text('BALILA-ON'),
         actions: [
           IconButton(
             icon: Icon(
