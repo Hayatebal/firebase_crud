@@ -69,17 +69,14 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       });
 
       // Countdown timer
-      Timer.periodic(
-        const Duration(seconds: 1),
-        (timer) {
-          setState(() {
-            _resendCountdown--;
-          });
-          if (_resendCountdown == 0) {
-            timer.cancel();
-          }
-        },
-      );
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _resendCountdown--;
+        });
+        if (_resendCountdown == 0) {
+          timer.cancel();
+        }
+      });
     } catch (e) {
       setState(() {
         _message = 'Error sending verification email: ${e.toString()}';
@@ -139,7 +136,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                       'We\'ve sent a verification email to your inbox. Click the link in the email to verify your account.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade600,
                         height: 1.5,
                       ),
@@ -212,8 +209,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
 
               // Resend Email Button
               ElevatedButton(
-                onPressed:
-                    (_isResending || _resendCountdown > 0) ? null : _resendVerificationEmail,
+                onPressed: (_isResending || _resendCountdown > 0)
+                    ? null
+                    : _resendVerificationEmail,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -253,7 +251,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   'Tip: Check your spam or promotions folder if you don\'t see the email',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: Colors.grey.shade500,
                     fontStyle: FontStyle.italic,
                   ),

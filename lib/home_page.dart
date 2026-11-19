@@ -41,64 +41,133 @@ class _HomePageState extends State<HomePage> {
 
     await showDialog<void>(
       context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.48),
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isEditing ? 'Edit Item' : 'Add Item'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                keyboardType: TextInputType.number,
-                controller: _quantityController,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                ),
-              ),
-            ],
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = _nameController.text.trim();
-                final quantity = int.tryParse(_quantityController.text.trim());
-
-                if (name.isEmpty || quantity == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid name and quantity.'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isEditing ? 'Edit Item' : 'Add item',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF30343B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nameController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: 'Name',
+                    labelStyle: const TextStyle(fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
                     ),
-                  );
-                  return;
-                }
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  controller: _quantityController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: 'Quantity',
+                    labelStyle: const TextStyle(fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF666E78),
+                          textStyle: const TextStyle(fontSize: 14),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final name = _nameController.text.trim();
+                          final quantity = int.tryParse(
+                            _quantityController.text.trim(),
+                          );
 
-                if (isEditing) {
-                  await _crudService.updateItem(
-                    document.id,
-                    name: name,
-                    quantity: quantity,
-                  );
-                } else {
-                  await _crudService.addItem(name, quantity);
-                }
+                          if (name.isEmpty || quantity == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please enter a valid name and quantity.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                Navigator.of(context).pop();
-              },
-              child: Text(isEditing ? 'Update' : 'Add'),
+                          if (isEditing) {
+                            await _crudService.updateItem(
+                              document.id,
+                              name: name,
+                              quantity: quantity,
+                            );
+                          } else {
+                            await _crudService.addItem(name, quantity);
+                          }
+
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: isEditing
+                              ? const Color(0xFFFFA000)
+                              : const Color(0xFF00A99D),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: Text(isEditing ? 'Update' : 'Add'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -106,9 +175,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteItem(String id) async {
     await _crudService.deleteItem(id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Item deleted')),
-    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Item deleted')));
   }
 
   Future<void> _toggleFavorite(
@@ -124,28 +194,68 @@ class _HomePageState extends State<HomePage> {
     final quantity = data['quantity']?.toString() ?? '0';
     final isFavorite = data['favorite'] == true;
 
-    return ListTile(
-      leading: IconButton(
-        icon: Icon(
-          isFavorite ? Icons.star : Icons.star_border,
-          color: isFavorite ? Colors.amber : null,
-        ),
-        onPressed: () => _toggleFavorite(document),
-        tooltip: isFavorite ? 'Unfavorite' : 'Favorite',
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      title: Text(name),
-      subtitle: Text('Quantity: $quantity'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF30343B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Quantity: $quantity',
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF8A929B)),
+                ),
+              ],
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              isFavorite ? Icons.star : Icons.star_border,
+              size: 16,
+              color: isFavorite
+                  ? const Color(0xFFFFA000)
+                  : const Color(0xFF8A929B),
+            ),
+            onPressed: () => _toggleFavorite(document),
+            tooltip: isFavorite ? 'Unfavorite' : 'Favorite',
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.edit, size: 16, color: Color(0xFFFFA000)),
             onPressed: () => _showItemDialog(document: document),
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.delete, size: 16, color: Color(0xFFE53935)),
             onPressed: () => _deleteItem(document.id),
           ),
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -154,21 +264,32 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE4E8EA),
       appBar: AppBar(
-        title: const Text('BALILA-ON'),
+        toolbarHeight: 44,
+        centerTitle: true,
+        backgroundColor: const Color(0xFF00A99D),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Firebase Balila-on',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: Icon(
-              _showFavoritesOnly ? Icons.star : Icons.star_border,
-            ),
+            visualDensity: VisualDensity.compact,
+            icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
             onPressed: () {
               setState(() {
                 _showFavoritesOnly = !_showFavoritesOnly;
               });
             },
-            tooltip: _showFavoritesOnly ? 'Show all items' : 'Show favorites only',
+            tooltip: _showFavoritesOnly
+                ? 'Show all items'
+                : 'Show favorites only',
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final confirmed = await showDialog<bool>(
@@ -194,13 +315,14 @@ class _HomePageState extends State<HomePage> {
                 },
               );
 
+              if (!context.mounted) return;
               if (confirmed == true) {
+                final navigator = Navigator.of(context);
                 await _authService.signOut();
-                if (mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                }
+                if (!mounted) return;
+                navigator.pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
               }
             },
             tooltip: 'Sign Out',
@@ -211,9 +333,7 @@ class _HomePageState extends State<HomePage> {
         stream: _crudService.getItems(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -226,16 +346,18 @@ class _HomePageState extends State<HomePage> {
 
           if (filteredDocs.isEmpty) {
             return Center(
-              child: Text(_showFavoritesOnly
-                  ? 'No favorite items yet. Tap a star to favorite an item.'
-                  : 'No items yet. Add one using the + button.'),
+              child: Text(
+                _showFavoritesOnly
+                    ? 'No favorite items yet. Tap a star to favorite an item.'
+                    : 'No items yet. Add one using the + button.',
+              ),
             );
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
             itemCount: filteredDocs.length,
-            separatorBuilder: (_, _) => const Divider(),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               return _buildItemTile(filteredDocs[index]);
             },
@@ -244,6 +366,10 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showItemDialog(),
+        elevation: 2,
+        backgroundColor: const Color(0xFF00A99D),
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
         child: const Icon(Icons.add),
       ),
     );

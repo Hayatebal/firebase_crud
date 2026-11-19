@@ -1,9 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _googleSignInInitialized = false;
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (_googleSignInInitialized) {
+      return;
+    }
+
+    await _googleSignIn.initialize(
+      clientId: kIsWeb
+          ? '347336235922-mi7rshamkaj0kqnrltnfgmuq75nogd6q.apps.googleusercontent.com'
+          : null,
+    );
+    _googleSignInInitialized = true;
+  }
 
   // Get current user
   User? get currentUser => _firebaseAuth.currentUser;
@@ -21,10 +36,10 @@ class AuthService {
         email: email,
         password: password,
       );
-      
+
       // Send email verification
       await userCredential.user?.sendEmailVerification();
-      
+
       return userCredential;
     } catch (e) {
       rethrow;
@@ -49,21 +64,24 @@ class AuthService {
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleSignInAccount =
-          await _googleSignIn.signIn();
-      
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
-        
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-        
-        return await _firebaseAuth.signInWithCredential(credential);
-      }
-      return null;
+      await _ensureGoogleSignInInitialized();
+
+      const scopes = <String>['email', 'profile'];
+      final googleSignInAccount = await _googleSignIn.authenticate(
+        scopeHint: scopes,
+      );
+      final googleSignInAuthentication = googleSignInAccount.authentication;
+      final googleSignInAuthorization =
+          await googleSignInAccount.authorizationClient.authorizationForScopes(
+            scopes,
+          );
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleSignInAuthorization?.accessToken,
+        idToken: googleSignInAuthentication.idToken,
+      );
+
+      return await _firebaseAuth.signInWithCredential(credential);
     } catch (e) {
       rethrow;
     }

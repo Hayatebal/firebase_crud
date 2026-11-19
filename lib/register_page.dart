@@ -262,7 +262,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 'By registering, you agree to our Terms and Conditions',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: Colors.grey.shade600,
                 ),
               ),
